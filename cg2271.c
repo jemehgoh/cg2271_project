@@ -199,3 +199,41 @@ void runMotor(uint8_t direction)
 			break;
 	}
 }
+
+/*
+* Enables UART1 to receive messages at the specified baudrate at PTE1.
+*
+* @param baudrate the baudrate of the UART messages to be received.
+*/
+void init_UART1(uint32_t baudrate)
+{
+	// Enable clock signal to UART1 and PORTC (UART TX/RX pins)
+	SIM -> SCGC4  |= SIM_SCGC4_UART1_MASK;
+	SIM -> SCGC5 |= SIM_SCGC5_PORTE_MASK;
+	
+	// Disable UART1
+	UART1 -> C2 &= ~(UART_C2_TE_MASK);
+	UART1 -> C2 &= ~(UART_C2_RE_MASK);
+	
+	// Clear all previous settings
+	UART1 -> S2 = 0;
+	UART1 -> C1 = 0;
+	UART1 -> C3 = 0;
+	
+	// Set up pins PTE1 for UART RX
+	PORTE -> PCR[1] |= PORT_PCR_MUX(3);
+	
+	// Set baudrate
+	uint32_t bus_clock = DEFAULT_SYSTEM_CLOCK / 2;
+	uint32_t divisor = bus_clock / (baudrate * 16);
+	UART1 -> BDH = UART_BDH_SBR(divisor >> 8);
+	UART1 -> BDL = UART_BDL_SBR(divisor);
+
+	// Enable TX/RX interrupts
+	UART1 -> C2 |= UART_C2_RIE_MASK;
+	NVIC_ClearPendingIRQ(UART1_IRQn);
+	NVIC_EnableIRQ(UART1_IRQn);
+	
+	// Enable RX on UART1
+	UART1 -> C2 |= UART_C2_RE_MASK;
+}
