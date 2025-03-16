@@ -9,6 +9,20 @@
 #define QUEUE_SIZE 16 // Macro for queue size - will use 16 bytes (for now)
 #define BAUD_RATE 9600 // Baudrate for UART (for connection to ESP32)
 
+// Green LED flag setting
+#define GREEN_LED_FLAG 0x00000001
+
+// Red LED flag settings
+#define RED_LED_STOP_OFF 0x00000000
+#define RED_LED_STOP_ON 0x00000001
+#define RED_LED_MOVE_OFF 0x00000002
+#define RED_LED_MOVE_ON 0x00000003
+
+// Red LED movement flag
+#define RED_LED_MOVE_FLAGS 0x00000002
+
+#define FLAG_ERROR_MASK 0x80000000
+
 static volatile uint32_t runningLED = 0;
 
 // Event flag id
@@ -55,23 +69,23 @@ __NO_RETURN static void brain_thread(void *argument) {
 			{
 				uint8_t motorDirection = command & 0x0F; // set motorDirection to the last 4 bits of the command
 				osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 0U);
-				osEventFlagsSet(greenLEDFlags, 0x00000001);
-				osEventFlagsSet(redLEDFlags, 0x00000002);
+				osEventFlagsSet(greenLEDFlags, GREEN_LED_FLAG);
+				osEventFlagsSet(redLEDFlags, RED_LED_MOVE_FLAGS);
 			}
 			else
 			{
 				uint8_t motorDirection = 0x00; // set motorDirection to 0 (stop motors)
 				osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 0U);
-				osEventFlagsClear(greenLEDFlags, 0x00000001);				
-				osEventFlagsClear(redLEDFlags, 0x00000002);				
+				osEventFlagsClear(greenLEDFlags, GREEN_LED_FLAG);				
+				osEventFlagsClear(redLEDFlags, RED_LED_MOVE_FLAGS);				
 			}
 		}
 		else
 		{
 			uint8_t motorDirection = 0x00; // set motorDirection to 0 (stop motors)
 			osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 0U);
-			osEventFlagsClear(greenLEDFlags, 0x00000001);				
-			osEventFlagsClear(redLEDFlags, 0x00000002);					
+			osEventFlagsClear(greenLEDFlags,GREEN_LED_FLAG);				
+			osEventFlagsClear(redLEDFlags, RED_LED_MOVE_FLAGS);					
 		}
 	}
 }
@@ -82,8 +96,8 @@ __NO_RETURN static void brain_thread(void *argument) {
 __NO_RETURN static void led_green_thread(void *argument) {
   (void)argument;
   for (;;) {
-		uint32_t flagStatus = osEventFlagsWait(greenLEDFlags, 0x00000001, osFlagsNoClear, 0U);
-		if (flagStatus & 0x80000000) 
+		uint32_t flagStatus = osEventFlagsWait(greenLEDFlags, GREEN_LED_FLAG, osFlagsNoClear, 0U);
+		if (flagStatus & FLAG_ERROR_MASK) 
 		{
 			// Flash all LEDS if flag is not set / an error has occurred
 			flashGreenLED(9);
