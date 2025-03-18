@@ -16,6 +16,6 @@ void initMotors(void);
 void runMotor(uint8_t direction);
 
 // UART functions
-void init_UART1(uint32_t baudrate);
+void init_UART2(uint32_t baudrate);
 
 #endif
