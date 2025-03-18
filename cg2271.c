@@ -230,10 +230,9 @@ void init_UART2(uint32_t baudrate)
 	UART2 -> BDL = UART_BDL_SBR(divisor);
 
 	// Enable RX interrupts
-	UART2 -> C2 |= UART_C2_RIE_MASK;
 	NVIC_ClearPendingIRQ(UART2_IRQn);
-	NVIC_SetPriority(UART2_IRQn,0);
 	NVIC_EnableIRQ(UART2_IRQn);
+	UART2 -> C2 |= UART_C2_RIE_MASK;
 	
 	// Enable RX on UART1
 	UART2 -> C2 |= UART_C2_RE_MASK;
