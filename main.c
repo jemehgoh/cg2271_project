@@ -114,7 +114,7 @@ __NO_RETURN static void led_green_thread(void *argument) {
 		}
 		else
 		{
-			runningLED = (runningLED == 2) ? 0 : (runningLED + 1);
+			runningLED = (runningLED == 7) ? 0 : (runningLED + 1);
 			flashGreenLED(runningLED);
 		}
 		osDelay(500);
