@@ -221,7 +221,7 @@ void init_UART2(uint32_t baudrate)
 	UART2 -> C3 = 0;
 	
 	// Set up pins PTE23 for UART RX
-	PORTE -> PCR[23] |= PORT_PCR_MUX(3);
+	PORTE -> PCR[23] |= PORT_PCR_MUX(4);
 	
 	// Set baudrate
 	uint32_t bus_clock = DEFAULT_SYSTEM_CLOCK / 2;
