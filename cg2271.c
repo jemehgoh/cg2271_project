@@ -219,15 +219,15 @@ void runMotor(uint8_t direction)
 {
 	switch (direction)
 	{
-		case 0:
-			// Stationary
-			TPM0_C0V = 0;
-			TPM0_C1V = 0;
-			TPM0_C2V = 0;
-			TPM0_C3V = 0;
-			break;
+//		case 0:
+//			// Stationary
+//			TPM0_C0V = 0;
+//			TPM0_C1V = 0;
+//			TPM0_C2V = 0;
+//			TPM0_C3V = 0;
+//			break;
 
-		case 1:
+		case 0:
 			// Forward motion
 			TPM0_C0V = 750;
 			TPM0_C1V = 0;
@@ -235,7 +235,7 @@ void runMotor(uint8_t direction)
 			TPM0_C3V = 0;
 			break;
 
-		case 2:
+		case 1:
 			// Backward motion
 			TPM0_C0V = 0;
 			TPM0_C1V = 750;
@@ -243,7 +243,7 @@ void runMotor(uint8_t direction)
 			TPM0_C3V = 750;
 			break;
 
-		case 3:
+		case 2:
 			// Left turn
 			TPM0_C0V = 0;
 			TPM0_C1V = 750;
@@ -251,7 +251,7 @@ void runMotor(uint8_t direction)
 			TPM0_C3V = 0;
 			break;
 
-		case 4:
+		case 3:
 			// Right turn
 			TPM0_C0V = 750;
 			TPM0_C1V = 0;
@@ -259,7 +259,7 @@ void runMotor(uint8_t direction)
 			TPM0_C3V = 750;
 			break;
 
-		case 5:
+		case 4:
 			// Front left curved turn
 			TPM0_C0V = 400;
 			TPM0_C1V = 0;
@@ -267,7 +267,7 @@ void runMotor(uint8_t direction)
 			TPM0_C3V = 0;
 			break;
 
-		case 6:
+		case 5:
 			// Front right curved turn
 			TPM0_C0V = 800;
 			TPM0_C1V = 0;
@@ -275,7 +275,7 @@ void runMotor(uint8_t direction)
 			TPM0_C3V = 0;
 			break;
 
-		case 7:
+		case 6:
 			// Back left curved turn
 			TPM0_C0V = 0;
 			TPM0_C1V = 400;
@@ -283,7 +283,7 @@ void runMotor(uint8_t direction)
 			TPM0_C3V = 800;
 			break;
 		
-		case 8:
+		case 7:
 			// Back right curved turn
 			TPM0_C0V = 0;
 			TPM0_C1V = 800;

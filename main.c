@@ -84,7 +84,7 @@ __NO_RETURN static void brain_thread(void *argument) {
 			}
 			else
 			{
-				motorDirection.data = 0x00; // set motorDirection to 0 (stop motors)
+				motorDirection.data = 0x08; // set motorDirection to 0 (stop motors)
 				osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 0U);
 				osEventFlagsClear(greenLEDFlags, GREEN_LED_FLAG);				
 				osEventFlagsClear(redLEDFlags, RED_LED_MOVE_FLAGS);				
@@ -92,7 +92,7 @@ __NO_RETURN static void brain_thread(void *argument) {
 		}
 		else
 		{
-			motorDirection.data = 0x00; // set motorDirection to 0 (stop motors)
+			motorDirection.data = 0x08; // set motorDirection to 0 (stop motors)
 			osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 0U);
 			osEventFlagsClear(greenLEDFlags,GREEN_LED_FLAG);				
 			osEventFlagsClear(redLEDFlags, RED_LED_MOVE_FLAGS);		
@@ -136,10 +136,10 @@ __NO_RETURN static void motor_thread(void *argument) {
 		else
 		{
 			// Motors stationary if no specified direction received
-			runMotor(0x00);
+			runMotor(0x08);
 		}
 //		runMotor(direction);
-		osDelay(2000);
+		osDelay(500);
 	}
 }
 
