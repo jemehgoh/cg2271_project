@@ -23,15 +23,28 @@
 
 #define FLAG_ERROR_MASK 0x80000000
 
+static volatile uint8_t msgReceived = 0;
+static volatile uint8_t command = 0x00;
+
 static volatile uint32_t runningLED = 0;
+static volatile uint8_t ledToRun = 0;
+
+static volatile uint8_t direction = 0x00;
+
+// Message packet
+typedef struct
+{
+	uint8_t data;
+	uint8_t buffer[3];
+} msgPkt;
 
 // Event flag id
-osEventFlagsId_t redLEDFlags;
-osEventFlagsId_t greenLEDFlags;
+ osEventFlagsId_t redLEDFlags;
+ osEventFlagsId_t greenLEDFlags;
 
 // Message queue ids
-osMessageQueueId_t command_MsgQueue; // Queue for commands from UART
-osMessageQueueId_t motorDirection_MsgQueue; // Queue for the motor direction
+ osMessageQueueId_t command_MsgQueue; // Queue for commands from UART
+ osMessageQueueId_t motorDirection_MsgQueue; // Queue for the motor direction
 
 // Thread parameters
 const osThreadAttr_t thread1_attr = {
@@ -43,13 +56,16 @@ const osThreadAttr_t thread2_attr = {
 };
 
 // UART ISR
-void UART1_IRQHandler(void)
+void UART2_IRQHandler(void)
 {
-	NVIC_ClearPendingIRQ(UART1_IRQn);
-	if (UART1_S1 & UART_S1_RDRF_MASK)
+	NVIC_ClearPendingIRQ(UART2_IRQn);
+	if (UART2_S1 & UART_S1_RDRF_MASK)
 	{
-		uint8_t command = UART1 -> D;
+		msgPkt command;
+		command.data = UART2 -> D;
 		osMessageQueuePut(command_MsgQueue, &command, 0U, 0U);
+//		command = UART2 -> D;
+//		msgReceived = 1;
 	}
 }
 
@@ -60,21 +76,23 @@ __NO_RETURN static void brain_thread(void *argument) {
   (void)argument;
   for (;;) {
 		// Get command from command queue
-		uint8_t command;
-		osStatus_t command_status = osMessageQueueGet(command_MsgQueue, &command, NULL, 0U);
+		msgPkt command;
+		msgPkt motorDirection;
+		osStatus_t command_status = osMessageQueueGet(command_MsgQueue, &command, NULL, osWaitForever);
 		
 		if (command_status == osOK)
 		{
-			if (command & 0x10)
+			if (command.data & 0x10)
 			{
-				uint8_t motorDirection = command & 0x0F; // set motorDirection to the last 4 bits of the command
+				
+				motorDirection.data = command.data & 0x0F; // set motorDirection to the last 4 bits of the command
 				osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 0U);
 				osEventFlagsSet(greenLEDFlags, GREEN_LED_FLAG);
 				osEventFlagsSet(redLEDFlags, RED_LED_MOVE_FLAGS);
 			}
 			else
 			{
-				uint8_t motorDirection = 0x00; // set motorDirection to 0 (stop motors)
+				motorDirection.data = 0x00; // set motorDirection to 0 (stop motors)
 				osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 0U);
 				osEventFlagsClear(greenLEDFlags, GREEN_LED_FLAG);				
 				osEventFlagsClear(redLEDFlags, RED_LED_MOVE_FLAGS);				
@@ -82,11 +100,26 @@ __NO_RETURN static void brain_thread(void *argument) {
 		}
 		else
 		{
-			uint8_t motorDirection = 0x00; // set motorDirection to 0 (stop motors)
+			motorDirection.data = 0x00; // set motorDirection to 0 (stop motors)
 			osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 0U);
 			osEventFlagsClear(greenLEDFlags,GREEN_LED_FLAG);				
-			osEventFlagsClear(redLEDFlags, RED_LED_MOVE_FLAGS);					
-		}
+			osEventFlagsClear(redLEDFlags, RED_LED_MOVE_FLAGS);		
+		}			
+//		if (msgReceived == 1)
+//		{
+//			if (command & 0x10)
+//			{
+//				direction = command & 0x0F;
+//				ledToRun = 1;
+//			}
+//			else
+//			{
+//				direction = 0x00;
+//				ledToRun = 0;
+//			}
+//			
+//			msgReceived = 0;
+//		}
 	}
 }
 
@@ -96,7 +129,7 @@ __NO_RETURN static void brain_thread(void *argument) {
 __NO_RETURN static void led_green_thread(void *argument) {
   (void)argument;
   for (;;) {
-		uint32_t flagStatus = osEventFlagsWait(greenLEDFlags, GREEN_LED_FLAG, osFlagsNoClear, 0U);
+		uint32_t flagStatus = osEventFlagsWait(greenLEDFlags, GREEN_LED_FLAG, osFlagsNoClear, osWaitForever);
 		if (flagStatus & FLAG_ERROR_MASK) 
 		{
 			// Flash all LEDS if flag is not set / an error has occurred
@@ -107,6 +140,15 @@ __NO_RETURN static void led_green_thread(void *argument) {
 			runningLED = (runningLED == 2) ? 0 : (runningLED + 1);
 			flashGreenLED(runningLED);
 		}
+//		if (ledToRun)
+//		{
+//			runningLED = (runningLED == 2) ? 0 : (runningLED + 1);
+//			flashGreenLED(runningLED);
+//		}
+//		else
+//		{
+//			flashGreenLED(9);
+//		}
 		osDelay(500);
 	}
 }
@@ -117,17 +159,18 @@ __NO_RETURN static void led_green_thread(void *argument) {
 __NO_RETURN static void motor_thread(void *argument) {
   (void)argument;
   for (;;) {
-		uint8_t motorDirection;
-		osStatus_t messageStatus = osMessageQueueGet(motorDirection_MsgQueue, &motorDirection, NULL, 0U);
+		msgPkt motorDirection;
+		osStatus_t messageStatus = osMessageQueueGet(motorDirection_MsgQueue, &motorDirection, NULL, osWaitForever);
 		if (messageStatus == osOK)
 		{
-			runMotor(motorDirection);
+			runMotor(motorDirection.data);
 		}
 		else
 		{
 			// Motors stationary if no specified direction received
-			runMotor(0x00);
+			runMotor(0x01);
 		}
+//		runMotor(direction);
 		osDelay(2000);
 	}
 }
@@ -138,20 +181,22 @@ int main(void) {
   SystemCoreClockUpdate();
   setupGreenLED();
 	initMotors();
-	init_UART1(BAUD_RATE);
+		
+	init_UART2(BAUD_RATE);
+	
+  osKernelInitialize();   	// Initialize CMSIS-RTOS
 	
 	// Initialize event flags
 	redLEDFlags = osEventFlagsNew(NULL);
 	greenLEDFlags = osEventFlagsNew(NULL);
 	
 	// Initalize message queues
-	command_MsgQueue = osMessageQueueNew(QUEUE_SIZE, sizeof(uint8_t), NULL); 
-	motorDirection_MsgQueue = osMessageQueueNew(QUEUE_SIZE, sizeof(uint8_t), NULL);
+	command_MsgQueue = osMessageQueueNew(16, 4, NULL); 
+	motorDirection_MsgQueue = osMessageQueueNew(16, 4, NULL);
 	
-  osKernelInitialize();                 // Initialize CMSIS-RTOS
-	osThreadNew(brain_thread, NULL, &thread2_attr); // Create thread for decoding commands
-	osThreadNew(led_green_thread, NULL, &thread1_attr); // Create thread for green LED
-  osThreadNew(motor_thread, NULL, &thread2_attr);     // Create thread for motor
+	osThreadNew(motor_thread, NULL, NULL); // Create thread for motor
+	osThreadNew(led_green_thread, NULL, NULL); // Create thread for green LED    
+	osThreadNew(brain_thread, NULL, NULL); // Create thread for decoding commands
   osKernelStart();                      // Start thread execution
   for (;;) {}
 }
