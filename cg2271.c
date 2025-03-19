@@ -2,10 +2,27 @@
 
 // Front LED control functions
 
+/* 
+  GPIO pins used for LEDs
+	- PTB0
+	- PTB1
+	- PTB2
+	- PTB3
+	- PTC2
+	- PTE29
+	- PTC1
+	- PTB30
+	
+	Refer to the FRMD-KL25Z datasheet for details on the pin positions on the board.
+	In running mode, the LEDs light up in the order listed above.
+*/
+
 /* Sets up the green LEDs */
 void setupGreenLED(void)
 {
 	SIM -> SCGC5 |= SIM_SCGC5_PORTB_MASK;
+	SIM -> SCGC5 |= SIM_SCGC5_PORTC_MASK;
+	SIM -> SCGC5 |= SIM_SCGC5_PORTE_MASK;
 
 	PORTB -> PCR[0] &= ~(PORT_PCR_MUX_MASK);
 	PORTB -> PCR[0] |= PORT_PCR_MUX(1);
@@ -15,11 +32,23 @@ void setupGreenLED(void)
 	PORTB -> PCR[2] |= PORT_PCR_MUX(1);
 	PORTB -> PCR[3] &= ~(PORT_PCR_MUX_MASK);
 	PORTB -> PCR[3] |= PORT_PCR_MUX(1);
+	PORTC -> PCR[2] &= ~(PORT_PCR_MUX_MASK);
+	PORTC -> PCR[2] |= PORT_PCR_MUX(1);
+	PORTE -> PCR[29] &= ~(PORT_PCR_MUX_MASK);
+	PORTE -> PCR[29] |= PORT_PCR_MUX(1);
+	PORTC -> PCR[1] &= ~(PORT_PCR_MUX_MASK);
+	PORTC -> PCR[1] |= PORT_PCR_MUX(1);
+	PORTE -> PCR[30] &= ~(PORT_PCR_MUX_MASK);
+	PORTE -> PCR[30] |= PORT_PCR_MUX(1);
 
 	PTB -> PDDR |= (1 << 0);
 	PTB -> PDDR |= (1 << 1);
 	PTB -> PDDR |= (1 << 2);
 	PTB -> PDDR |= (1 << 3);
+	PTC -> PDDR |= (1 << 2);
+	PTE -> PDDR |= (1 << 29);
+	PTC -> PDDR |= (1 << 1);
+	PTE -> PDDR |= (1 << 30);
 }
 
 /* Flashes the green LEDs in a running order */
@@ -31,24 +60,95 @@ void flashGreenLED(uint32_t index)
 		 PTB -> PDOR |= (1 << 0);
 		 PTB -> PDOR &= ~(1 << 1);
 		 PTB -> PDOR &= ~(1 << 2);
+		 PTB -> PDOR &= ~(1 << 3);
+	   PTC -> PDOR &= ~(1 << 2);
+		 PTE -> PDOR &= ~(1 << 29);
+		 PTC -> PDOR &= ~(1 << 1);
+		 PTE -> PDOR &= ~(1 << 30);
 		 break;
 
 	 case 1:
 		 PTB -> PDOR &= ~(1 << 0);
 		 PTB -> PDOR |= (1 << 1);
 		 PTB -> PDOR &= ~(1 << 2);
+		 PTB -> PDOR &= ~(1 << 3);
+	 	 PTC -> PDOR &= ~(1 << 2);
+		 PTE -> PDOR &= ~(1 << 29);
+		 PTC -> PDOR &= ~(1 << 1);
+		 PTE -> PDOR &= ~(1 << 30);
 		 break;
 
 	 case 2:
 		 PTB -> PDOR &= ~(1 << 0);
 		 PTB -> PDOR &= ~(1 << 1);
 		 PTB -> PDOR |= (1 << 2);
+	   PTB -> PDOR &= ~(1 << 3);
+	   PTC -> PDOR &= ~(1 << 2);
+		 PTE -> PDOR &= ~(1 << 29);
+		 PTC -> PDOR &= ~(1 << 1);
+		 PTE -> PDOR &= ~(1 << 30);
 		 break;
-
+	 
+	 case 3:
+		 PTB -> PDOR &= ~(1 << 0);
+		 PTB -> PDOR &= ~(1 << 1);
+		 PTB -> PDOR &= ~(1 << 2);
+	   PTB -> PDOR |= (1 << 3);
+	   PTC -> PDOR &= ~(1 << 2);
+		 PTE -> PDOR &= ~(1 << 29);
+		 PTC -> PDOR &= ~(1 << 1);
+		 PTE -> PDOR &= ~(1 << 30);
+		 break;
+	 
+	 case 4:
+		 PTB -> PDOR &= ~(1 << 0);
+		 PTB -> PDOR &= ~(1 << 1);
+		 PTB -> PDOR &= ~(1 << 2);
+		 PTB -> PDOR &= ~(1 << 3);
+	   PTC -> PDOR |= (1 << 2);
+		 PTE -> PDOR &= ~(1 << 29);
+		 PTC -> PDOR &= ~(1 << 1);
+		 PTE -> PDOR &= ~(1 << 30);
+		 break;
+	 
+	 case 5:
+		 PTB -> PDOR &= ~(1 << 0);
+		 PTB -> PDOR &= ~(1 << 1);
+		 PTB -> PDOR &= ~(1 << 2);
+		 PTB -> PDOR &= ~(1 << 3);
+		 PTC -> PDOR &= ~(1 << 2);
+		 PTE -> PDOR |= (1 << 29);
+		 PTC -> PDOR &= ~(1 << 1);
+		 PTE -> PDOR &= ~(1 << 30);
+		 break;
+		 
+   case 6:
+		 PTB -> PDOR &= ~(1 << 0);
+		 PTB -> PDOR &= ~(1 << 1);
+		 PTB -> PDOR &= ~(1 << 2);
+		 PTB -> PDOR &= ~(1 << 3);
+	 	 PTC -> PDOR &= ~(1 << 2);
+		 PTE -> PDOR &= ~(1 << 29);
+		 PTC -> PDOR |= (1 << 1);
+		 PTE -> PDOR &= ~(1 << 30);
+		 break;
+			 
+	 case 7:
+		 PTB -> PDOR &= ~(1 << 0);
+		 PTB -> PDOR &= ~(1 << 1);
+		 PTB -> PDOR &= ~(1 << 2);
+		 PTB -> PDOR &= ~(1 << 3);
+	   PTC -> PDOR &= ~(1 << 2);
+		 PTE -> PDOR &= ~(1 << 29);
+		 PTC -> PDOR &= ~(1 << 1);
+		 PTE -> PDOR |= (1 << 30);
+		 break;
+	 
 	 default:
 		 PTB -> PDOR |= (1 << 0);
 		 PTB -> PDOR |= (1 << 1);
 		 PTB -> PDOR |= (1 << 2);
+	   PTB -> PDOR |= (1 << 3);
 		 break;
 	}
 }

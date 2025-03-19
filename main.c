@@ -23,13 +23,7 @@
 
 #define FLAG_ERROR_MASK 0x80000000
 
-static volatile uint8_t msgReceived = 0;
-static volatile uint8_t command = 0x00;
-
 static volatile uint32_t runningLED = 0;
-static volatile uint8_t ledToRun = 0;
-
-static volatile uint8_t direction = 0x00;
 
 // Message packet
 typedef struct
@@ -64,8 +58,6 @@ void UART2_IRQHandler(void)
 		msgPkt command;
 		command.data = UART2 -> D;
 		osMessageQueuePut(command_MsgQueue, &command, 0U, 0U);
-//		command = UART2 -> D;
-//		msgReceived = 1;
 	}
 }
 
@@ -105,21 +97,6 @@ __NO_RETURN static void brain_thread(void *argument) {
 			osEventFlagsClear(greenLEDFlags,GREEN_LED_FLAG);				
 			osEventFlagsClear(redLEDFlags, RED_LED_MOVE_FLAGS);		
 		}			
-//		if (msgReceived == 1)
-//		{
-//			if (command & 0x10)
-//			{
-//				direction = command & 0x0F;
-//				ledToRun = 1;
-//			}
-//			else
-//			{
-//				direction = 0x00;
-//				ledToRun = 0;
-//			}
-//			
-//			msgReceived = 0;
-//		}
 	}
 }
 
@@ -137,18 +114,9 @@ __NO_RETURN static void led_green_thread(void *argument) {
 		}
 		else
 		{
-			runningLED = (runningLED == 2) ? 0 : (runningLED + 1);
+			runningLED = (runningLED == 7) ? 0 : (runningLED + 1);
 			flashGreenLED(runningLED);
 		}
-//		if (ledToRun)
-//		{
-//			runningLED = (runningLED == 2) ? 0 : (runningLED + 1);
-//			flashGreenLED(runningLED);
-//		}
-//		else
-//		{
-//			flashGreenLED(9);
-//		}
 		osDelay(500);
 	}
 }
@@ -168,7 +136,7 @@ __NO_RETURN static void motor_thread(void *argument) {
 		else
 		{
 			// Motors stationary if no specified direction received
-			runMotor(0x01);
+			runMotor(0x00);
 		}
 //		runMotor(direction);
 		osDelay(2000);
