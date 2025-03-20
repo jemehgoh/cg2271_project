@@ -72,7 +72,7 @@ __NO_RETURN static void brain_thread(void *argument) {
 		// Get command from command queue
 		msgPkt command;
 		msgPkt motorDirection;
-		osStatus_t command_status = osMessageQueueGet(command_MsgQueue, &command, NULL, osWaitForever);
+		osStatus_t command_status = osMessageQueueGet(command_MsgQueue, &command, NULL, 0U);
 		
 		if (command_status == osOK)
 		{
@@ -80,7 +80,7 @@ __NO_RETURN static void brain_thread(void *argument) {
 			{
 				
 				motorDirection.data = command.data & 0x0F; // set motorDirection to the last 4 bits of the command
-				osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 0U);
+				osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 10U);
 				osEventFlagsSet(greenLEDRunFlag, FLAG_SET);
 				osEventFlagsClear(greenLEDStopFlag, FLAG_SET);
 				osEventFlagsSet(redLEDFlags, RED_LED_MOVE_FLAGS);
