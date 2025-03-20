@@ -18,7 +18,7 @@ static volatile uint32_t runningLED = 0;
 static uint32_t tune_mods[3] = {1875, 1500, 1667};
 static uint32_t tune_len = 3;
 
-static volatile uint32_t mod_index;
+static volatile uint32_t mod_index = 0;
 
 // Message packet
 typedef struct
