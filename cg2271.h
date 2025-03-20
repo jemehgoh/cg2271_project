@@ -18,4 +18,9 @@ void runMotor(uint8_t direction);
 // UART functions
 void init_UART2(uint32_t baudrate);
 
+// Buzzer functions
+void setupBuzzer(void);
+void playBuzzer(uint32_t mod);
+void disableBuzzer(void);
+
 #endif

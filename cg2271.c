@@ -219,15 +219,15 @@ void runMotor(uint8_t direction)
 {
 	switch (direction)
 	{
-		case 0:
-			// Stationary
-			TPM0_C0V = 0;
-			TPM0_C1V = 0;
-			TPM0_C2V = 0;
-			TPM0_C3V = 0;
-			break;
+//		case 0:
+//			// Stationary
+//			TPM0_C0V = 0;
+//			TPM0_C1V = 0;
+//			TPM0_C2V = 0;
+//			TPM0_C3V = 0;
+//			break;
 
-		case 1:
+		case 0:
 			// Forward motion
 			TPM0_C0V = 750;
 			TPM0_C1V = 0;
@@ -235,7 +235,7 @@ void runMotor(uint8_t direction)
 			TPM0_C3V = 0;
 			break;
 
-		case 2:
+		case 1:
 			// Backward motion
 			TPM0_C0V = 0;
 			TPM0_C1V = 750;
@@ -243,7 +243,7 @@ void runMotor(uint8_t direction)
 			TPM0_C3V = 750;
 			break;
 
-		case 3:
+		case 2:
 			// Left turn
 			TPM0_C0V = 0;
 			TPM0_C1V = 750;
@@ -251,7 +251,7 @@ void runMotor(uint8_t direction)
 			TPM0_C3V = 0;
 			break;
 
-		case 4:
+		case 3:
 			// Right turn
 			TPM0_C0V = 750;
 			TPM0_C1V = 0;
@@ -259,7 +259,7 @@ void runMotor(uint8_t direction)
 			TPM0_C3V = 750;
 			break;
 
-		case 5:
+		case 4:
 			// Front left curved turn
 			TPM0_C0V = 400;
 			TPM0_C1V = 0;
@@ -267,7 +267,7 @@ void runMotor(uint8_t direction)
 			TPM0_C3V = 0;
 			break;
 
-		case 6:
+		case 5:
 			// Front right curved turn
 			TPM0_C0V = 800;
 			TPM0_C1V = 0;
@@ -275,7 +275,7 @@ void runMotor(uint8_t direction)
 			TPM0_C3V = 0;
 			break;
 
-		case 7:
+		case 6:
 			// Back left curved turn
 			TPM0_C0V = 0;
 			TPM0_C1V = 400;
@@ -283,7 +283,7 @@ void runMotor(uint8_t direction)
 			TPM0_C3V = 800;
 			break;
 		
-		case 8:
+		case 7:
 			// Back right curved turn
 			TPM0_C0V = 0;
 			TPM0_C1V = 800;
@@ -336,4 +336,53 @@ void init_UART2(uint32_t baudrate)
 	
 	// Enable RX on UART1
 	UART2 -> C2 |= UART_C2_RE_MASK;
+}
+
+// Buzzer functions
+
+// Sets up buzzer without playing any tone
+void setupBuzzer(void)
+{
+	// Set up PTA12 as TPM1 output
+	SIM_SCGC5 |= SIM_SCGC5_PORTA_MASK;
+	
+	PORTA -> PCR[12] &= ~PORT_PCR_MUX_MASK;
+	PORTA -> PCR[12] |= PORT_PCR_MUX(3);
+	
+	SIM -> SCGC6 |= SIM_SCGC6_TPM1_MASK;
+	
+	SIM -> SOPT2 &= ~SIM_SOPT2_TPMSRC_MASK;
+	SIM -> SOPT2 |= SIM_SOPT2_TPMSRC(1);
+	
+	TPM1 -> MOD = 1000;
+	
+	// Clear prescaler and clock setting for TPM1
+	TPM1 -> SC &= ~(TPM_SC_CMOD_MASK);
+	TPM1 -> SC &= ~(TPM_SC_PS_MASK);
+
+	// Set clock source to TPM1 counter clock and prescaler to 128
+	TPM1 -> SC |= TPM_SC_PS(7);
+	
+	TPM1 -> SC &= ~(TPM_SC_CPWMS_MASK);
+	
+	TPM1 -> SC |= TPM_SC_CMOD(1);
+	
+	// Set up TPM1 Ch0 to output high-true edge-aligned PWM
+	TPM1_C0V = 0;
+	TPM1_C0SC &= ~((TPM_CnSC_ELSB_MASK) | (TPM_CnSC_ELSA_MASK) | (TPM_CnSC_MSB_MASK) | (TPM_CnSC_MSA_MASK));
+	TPM1_C0SC |= (TPM_CnSC_MSB(1)|TPM_CnSC_ELSB(0b10 >> 1)); 
+}
+
+// Plays a tone on the buzzer with the specified mod value
+void playBuzzer(uint32_t mod)
+{
+	TPM1 -> MOD = mod;
+	TPM1_C0V = (mod / 2);
+}
+
+
+// Disables the buzzer
+void disableBuzzer(void)
+{
+	TPM1_C0V = 0;
 }
