@@ -157,6 +157,41 @@ void flashGreenLED(uint32_t index)
 	}
 }
 
+// Red LED control functions
+
+/*
+* Setup the red LEDs
+*/
+void setupRedLED(void)
+{
+	// Enable clock signal to PORTD and PORTE
+	SIM -> SCGC5 |= SIM_SCGC5_PORTD_MASK;
+	SIM -> SCGC5 |= SIM_SCGC5_PORTE_MASK;
+	
+	// Set up PTE1, PTE0, PTD6, PTD7 as GPIO
+	PORTE -> PCR[0] |= PORT_PCR_MUX(1);
+	PORTE -> PCR[1] |= PORT_PCR_MUX(1);	
+	PORTD -> PCR[6] |= PORT_PCR_MUX(1);
+	PORTD -> PCR[7] |= PORT_PCR_MUX(1);
+	
+	// Configure direction of pins
+	PTE -> PDDR |= (1 << 0);
+	PTE -> PDDR |= (1 << 1);
+	PTD -> PDDR |= (1 << 6);
+	PTD -> PDDR |= (1 << 7);
+}
+
+/*
+* Toggles the red LEDs (switches them ON when they are OFF, and vice versa)
+*/
+void toggleRedLED(void)
+{
+	PTE -> PTOR |= (1 << 0);
+	PTE -> PTOR |= (1 << 1);
+	PTD -> PTOR |= (1 << 6);
+	PTD -> PTOR |= (1 << 7);
+}
+
 // Motor control functions
 
 /*
