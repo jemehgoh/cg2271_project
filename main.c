@@ -16,18 +16,14 @@ static volatile uint32_t runningLED = 0;
 
 // Buzzer tune mod values (for setting PWM frequency)
 static uint32_t tune_mods[3] = {1875, 1500, 1667};
-static uint32_t tune_len = 3;
+static uint32_t tune_len = 2; // length of tune_mods - 1
 
-<<<<<<< HEAD
 // Buzzer end tune mod values (for setting PWM frequency)
 static uint32_t end_tune_mods[3] = {1875, 1500, 1667};
 static uint32_t end_tune_len = 3;
 
 static volatile uint32_t mod_index = 0;
 static volatile uint32_t end_mod_index = 0;
-=======
-static volatile uint32_t mod_index = 0;
->>>>>>> master
 
 // Message packet
 typedef struct
@@ -217,7 +213,7 @@ __NO_RETURN static void buzzer_thread(void *argument) {
   (void)argument;
   for (;;) {
 		osEventFlagsWait(programRunFlag, FLAG_SET, osFlagsNoClear, osWaitForever);
-		mod_index = (mod_index < tune_len) ? (mod_index + 1) : 0;
+		mod_index = (mod_index == tune_len) ? (mod_index + 1) : 0;
 		playBuzzer(tune_mods[mod_index]);
 		osDelay(300);
 	}
