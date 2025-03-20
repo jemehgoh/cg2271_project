@@ -149,6 +149,10 @@ void flashGreenLED(uint32_t index)
 		 PTB -> PDOR |= (1 << 1);
 		 PTB -> PDOR |= (1 << 2);
 	   PTB -> PDOR |= (1 << 3);
+	 	 PTC -> PDOR |= (1 << 2);
+		 PTE -> PDOR |= (1 << 29);
+		 PTC -> PDOR |= (1 << 1);
+		 PTE -> PDOR |= (1 << 30);
 		 break;
 	}
 }

@@ -10,7 +10,7 @@
 #define BAUD_RATE 9600 // Baudrate for UART (for connection to ESP32)
 
 // Green LED flag setting
-#define GREEN_LED_FLAG 0x00000001
+#define FLAG_SET 0x1
 
 // Red LED flag settings
 #define RED_LED_STOP_OFF 0x00000000
@@ -34,7 +34,9 @@ typedef struct
 
 // Event flag id
  osEventFlagsId_t redLEDFlags;
- osEventFlagsId_t greenLEDFlags;
+
+ osEventFlagsId_t greenLEDRunFlag;
+ osEventFlagsId_t greenLEDStopFlag;
 
 // Message queue ids
  osMessageQueueId_t command_MsgQueue; // Queue for commands from UART
@@ -70,7 +72,7 @@ __NO_RETURN static void brain_thread(void *argument) {
 		// Get command from command queue
 		msgPkt command;
 		msgPkt motorDirection;
-		osStatus_t command_status = osMessageQueueGet(command_MsgQueue, &command, NULL, osWaitForever);
+		osStatus_t command_status = osMessageQueueGet(command_MsgQueue, &command, NULL, 0U);
 		
 		if (command_status == osOK)
 		{
@@ -78,15 +80,17 @@ __NO_RETURN static void brain_thread(void *argument) {
 			{
 				
 				motorDirection.data = command.data & 0x0F; // set motorDirection to the last 4 bits of the command
-				osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 0U);
-				osEventFlagsSet(greenLEDFlags, GREEN_LED_FLAG);
+				osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 10U);
+				osEventFlagsSet(greenLEDRunFlag, FLAG_SET);
+				osEventFlagsClear(greenLEDStopFlag, FLAG_SET);
 				osEventFlagsSet(redLEDFlags, RED_LED_MOVE_FLAGS);
 			}
 			else
 			{
 				motorDirection.data = 0x08; // set motorDirection to 0 (stop motors)
 				osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 0U);
-				osEventFlagsClear(greenLEDFlags, GREEN_LED_FLAG);				
+				osEventFlagsSet(greenLEDStopFlag, FLAG_SET);
+				osEventFlagsClear(greenLEDRunFlag, FLAG_SET);			
 				osEventFlagsClear(redLEDFlags, RED_LED_MOVE_FLAGS);				
 			}
 		}
@@ -94,29 +98,34 @@ __NO_RETURN static void brain_thread(void *argument) {
 		{
 			motorDirection.data = 0x08; // set motorDirection to 0 (stop motors)
 			osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 0U);
-			osEventFlagsClear(greenLEDFlags,GREEN_LED_FLAG);				
+			osEventFlagsSet(greenLEDStopFlag, FLAG_SET);
+			osEventFlagsClear(greenLEDRunFlag, FLAG_SET);						
 			osEventFlagsClear(redLEDFlags, RED_LED_MOVE_FLAGS);		
 		}			
 	}
 }
 
 /*----------------------------------------------------------------------------
- * Thread for blinking green LED
+ * Thread for running green LED
  *---------------------------------------------------------------------------*/
-__NO_RETURN static void led_green_thread(void *argument) {
+__NO_RETURN static void led_green_run_thread(void *argument) {
   (void)argument;
   for (;;) {
-		uint32_t flagStatus = osEventFlagsWait(greenLEDFlags, GREEN_LED_FLAG, osFlagsNoClear, osWaitForever);
-		if (flagStatus & FLAG_ERROR_MASK) 
-		{
-			// Flash all LEDS if flag is not set / an error has occurred
-			flashGreenLED(9);
-		}
-		else
-		{
-			runningLED = (runningLED == 7) ? 0 : (runningLED + 1);
-			flashGreenLED(runningLED);
-		}
+		osEventFlagsWait(greenLEDRunFlag, FLAG_SET, osFlagsNoClear, osWaitForever);
+		runningLED = (runningLED == 7) ? 0 : (runningLED + 1);
+		flashGreenLED(runningLED);
+		osDelay(500);
+	}
+}
+
+/*----------------------------------------------------------------------------
+ * Thread for flashing all green LED
+ *---------------------------------------------------------------------------*/
+__NO_RETURN static void led_green_stop_thread(void *argument) {
+  (void)argument;
+  for (;;) {
+		osEventFlagsWait(greenLEDStopFlag, FLAG_SET, osFlagsNoClear, osWaitForever);
+		flashGreenLED(9);
 		osDelay(500);
 	}
 }
@@ -138,7 +147,7 @@ __NO_RETURN static void motor_thread(void *argument) {
 			// Motors stationary if no specified direction received
 			runMotor(0x08);
 		}
-//		runMotor(direction);
+		
 		osDelay(500);
 	}
 }
@@ -156,14 +165,16 @@ int main(void) {
 	
 	// Initialize event flags
 	redLEDFlags = osEventFlagsNew(NULL);
-	greenLEDFlags = osEventFlagsNew(NULL);
+	greenLEDRunFlag = osEventFlagsNew(NULL);
+	greenLEDStopFlag = osEventFlagsNew(NULL);
 	
 	// Initalize message queues
 	command_MsgQueue = osMessageQueueNew(16, 4, NULL); 
 	motorDirection_MsgQueue = osMessageQueueNew(16, 4, NULL);
 	
 	osThreadNew(motor_thread, NULL, NULL); // Create thread for motor
-	osThreadNew(led_green_thread, NULL, NULL); // Create thread for green LED    
+	osThreadNew(led_green_run_thread, NULL, NULL); // Create thread for running green LED  
+	osThreadNew(led_green_stop_thread, NULL, NULL);  // Create thread for stopping green LED
 	osThreadNew(brain_thread, NULL, NULL); // Create thread for decoding commands
   osKernelStart();                      // Start thread execution
   for (;;) {}
