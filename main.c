@@ -12,18 +12,13 @@
 // Green LED flag setting
 #define FLAG_SET 0x1
 
-// Red LED flag settings
-#define RED_LED_STOP_OFF 0x00000000
-#define RED_LED_STOP_ON 0x00000001
-#define RED_LED_MOVE_OFF 0x00000002
-#define RED_LED_MOVE_ON 0x00000003
-
-// Red LED movement flag
-#define RED_LED_MOVE_FLAGS 0x00000002
-
-#define FLAG_ERROR_MASK 0x80000000
-
 static volatile uint32_t runningLED = 0;
+
+// Buzzer tune mod values (for setting PWM frequency)
+static uint32_t tune_mods[3] = {1875, 1500, 1667};
+static uint32_t tune_len = 3;
+
+static volatile uint32_t mod_index;
 
 // Message packet
 typedef struct
@@ -180,6 +175,18 @@ __NO_RETURN static void motor_thread(void *argument) {
 	}
 }
 
+/*----------------------------------------------------------------------------
+ * Thread for buzzer control
+ *---------------------------------------------------------------------------*/
+__NO_RETURN static void buzzer_thread(void *argument) {
+  (void)argument;
+  for (;;) {
+		mod_index = (mod_index == tune_len) ? 0 : (mod_index + 1);
+		playBuzzer(tune_mods[mod_index]);
+		osDelay(300);
+	}
+}
+
 int main(void) {
  
   // System Initialization
@@ -187,6 +194,7 @@ int main(void) {
   setupGreenLED();
 	setupRedLED();
 	initMotors();
+	setupBuzzer();
 		
 	init_UART2(BAUD_RATE);
 	
@@ -207,7 +215,9 @@ int main(void) {
 	osThreadNew(led_green_stop_thread, NULL, NULL);  // Create thread for stopping green LED
 	osThreadNew(led_red_run_thread, NULL, NULL); // Create thread for running red LED  
 	osThreadNew(led_red_stop_thread, NULL, NULL);  // Create thread for stopping red LED	
+	osThreadNew(buzzer_thread, NULL, NULL);  // Create thread for buzzer	
 	osThreadNew(brain_thread, NULL, NULL); // Create thread for decoding commands
+	
   osKernelStart();                      // Start thread execution
   for (;;) {}
 }
