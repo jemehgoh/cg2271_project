@@ -18,7 +18,12 @@ static volatile uint32_t runningLED = 0;
 static uint32_t tune_mods[3] = {1875, 1500, 1667};
 static uint32_t tune_len = 3;
 
-static volatile uint32_t mod_index;
+// Buzzer end tune mod values (for setting PWM frequency)
+static uint32_t end_tune_mods[3] = {1875, 1500, 1667};
+static uint32_t end_tune_len = 3;
+
+static volatile uint32_t mod_index = 0;
+static volatile uint32_t end_mod_index = 0;
 
 // Message packet
 typedef struct
@@ -33,6 +38,9 @@ typedef struct
 
  osEventFlagsId_t greenLEDRunFlag;
  osEventFlagsId_t greenLEDStopFlag;
+
+ osEventFlagsId_t programRunFlag;
+ osEventFlagsId_t programEndFlag;
 
 // Message queue ids
  osMessageQueueId_t command_MsgQueue; // Queue for commands from UART
@@ -65,6 +73,8 @@ void UART2_IRQHandler(void)
 __NO_RETURN static void brain_thread(void *argument) {
   (void)argument;
   for (;;) {
+		osEventFlagsWait(programRunFlag, FLAG_SET, osFlagsNoClear, osWaitForever);
+		
 		// Get command from command queue
 		msgPkt command;
 		msgPkt motorDirection;
@@ -74,18 +84,39 @@ __NO_RETURN static void brain_thread(void *argument) {
 		{
 			if (command.data & 0x10)
 			{
-				
+				// Run motors
 				motorDirection.data = command.data & 0x0F; // set motorDirection to the last 4 bits of the command
 				osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 10U);
+				
+				// Set LEDs to moving mode
 				osEventFlagsSet(greenLEDRunFlag, FLAG_SET);
 				osEventFlagsClear(greenLEDStopFlag, FLAG_SET);
 				osEventFlagsSet(redLEDRunFlag, FLAG_SET);
 				osEventFlagsClear(redLEDStopFlag, FLAG_SET);
 			}
+			else if (command.data & 0x20)
+			{
+				// Stop motors
+				motorDirection.data = 0x08;
+				osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 0U);
+				
+				// Set LEDs to stationary mode
+				osEventFlagsSet(greenLEDStopFlag, FLAG_SET);
+				osEventFlagsClear(greenLEDRunFlag, FLAG_SET);			
+				osEventFlagsSet(redLEDStopFlag, FLAG_SET);
+				osEventFlagsClear(redLEDRunFlag, FLAG_SET);
+				
+				// End program
+				osEventFlagsSet(programEndFlag, FLAG_SET);
+				osEventFlagsClear(programRunFlag, FLAG_SET);
+			}
 			else
 			{
+				// Stop motors				
 				motorDirection.data = 0x08; // set motorDirection to 0 (stop motors)
 				osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 0U);
+				
+				// Set LEDs to stationary mode				
 				osEventFlagsSet(greenLEDStopFlag, FLAG_SET);
 				osEventFlagsClear(greenLEDRunFlag, FLAG_SET);			
 				osEventFlagsSet(redLEDStopFlag, FLAG_SET);
@@ -181,8 +212,22 @@ __NO_RETURN static void motor_thread(void *argument) {
 __NO_RETURN static void buzzer_thread(void *argument) {
   (void)argument;
   for (;;) {
+		osEventFlagsWait(programRunFlag, FLAG_SET, osFlagsNoClear, osWaitForever);
 		mod_index = (mod_index < tune_len) ? (mod_index + 1) : 0;
 		playBuzzer(tune_mods[mod_index]);
+		osDelay(300);
+	}
+}
+
+/*----------------------------------------------------------------------------
+ * Thread for buzzer control
+ *---------------------------------------------------------------------------*/
+__NO_RETURN static void buzzer_end_thread(void *argument) {
+  (void)argument;
+  for (;;) {
+		osEventFlagsWait(programEndFlag, FLAG_SET, osFlagsNoClear, osWaitForever);
+		mod_index = (mod_index < end_tune_len) ? (mod_index + 1) : 0;
+		playBuzzer(end_tune_mods[mod_index]);
 		osDelay(300);
 	}
 }
@@ -205,10 +250,14 @@ int main(void) {
 	redLEDStopFlag = osEventFlagsNew(NULL);
 	greenLEDRunFlag = osEventFlagsNew(NULL);
 	greenLEDStopFlag = osEventFlagsNew(NULL);
+	programRunFlag = osEventFlagsNew(NULL);
+	programEndFlag = osEventFlagsNew(NULL);
 	
 	// Initalize message queues
 	command_MsgQueue = osMessageQueueNew(16, 4, NULL); 
 	motorDirection_MsgQueue = osMessageQueueNew(16, 4, NULL);
+	
+	osEventFlagsSet(programRunFlag, FLAG_SET);
 	
 	osThreadNew(motor_thread, NULL, NULL); // Create thread for motor
 	osThreadNew(led_green_run_thread, NULL, NULL); // Create thread for running green LED  
@@ -216,6 +265,7 @@ int main(void) {
 	osThreadNew(led_red_run_thread, NULL, NULL); // Create thread for running red LED  
 	osThreadNew(led_red_stop_thread, NULL, NULL);  // Create thread for stopping red LED	
 	osThreadNew(buzzer_thread, NULL, NULL);  // Create thread for buzzer	
+	osThreadNew(buzzer_end_thread, NULL, NULL);  // Create thread for buzzer	
 	osThreadNew(brain_thread, NULL, NULL); // Create thread for decoding commands
 	
   osKernelStart();                      // Start thread execution
