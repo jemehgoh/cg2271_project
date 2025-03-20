@@ -18,12 +18,16 @@ static volatile uint32_t runningLED = 0;
 static uint32_t tune_mods[3] = {1875, 1500, 1667};
 static uint32_t tune_len = 3;
 
+<<<<<<< HEAD
 // Buzzer end tune mod values (for setting PWM frequency)
 static uint32_t end_tune_mods[3] = {1875, 1500, 1667};
 static uint32_t end_tune_len = 3;
 
 static volatile uint32_t mod_index = 0;
 static volatile uint32_t end_mod_index = 0;
+=======
+static volatile uint32_t mod_index = 0;
+>>>>>>> master
 
 // Message packet
 typedef struct
