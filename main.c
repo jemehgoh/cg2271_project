@@ -20,7 +20,7 @@ static uint32_t tune_len = 2; // length of tune_mods - 1
 
 // Buzzer end tune mod values (for setting PWM frequency)
 static uint32_t end_tune_mods[3] = {1875, 1500, 1667};
-static uint32_t end_tune_len = 3;
+static uint32_t end_tune_len = 2; // length of end_tune_mods - 1
 
 static volatile uint32_t mod_index = 0;
 static volatile uint32_t end_mod_index = 0;
@@ -207,7 +207,7 @@ __NO_RETURN static void motor_thread(void *argument) {
 }
 
 /*----------------------------------------------------------------------------
- * Thread for buzzer control
+ * Thread for buzzer control in running mode
  *---------------------------------------------------------------------------*/
 __NO_RETURN static void buzzer_thread(void *argument) {
   (void)argument;
@@ -220,13 +220,13 @@ __NO_RETURN static void buzzer_thread(void *argument) {
 }
 
 /*----------------------------------------------------------------------------
- * Thread for buzzer control
+ * Thread for buzzer control in end mode
  *---------------------------------------------------------------------------*/
 __NO_RETURN static void buzzer_end_thread(void *argument) {
   (void)argument;
   for (;;) {
 		osEventFlagsWait(programEndFlag, FLAG_SET, osFlagsNoClear, osWaitForever);
-		mod_index = (mod_index < end_tune_len) ? (mod_index + 1) : 0;
+		mod_index = (mod_index == end_tune_len) ? (mod_index + 1) : 0;
 		playBuzzer(end_tune_mods[mod_index]);
 		osDelay(300);
 	}
