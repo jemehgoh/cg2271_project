@@ -181,7 +181,7 @@ __NO_RETURN static void motor_thread(void *argument) {
 __NO_RETURN static void buzzer_thread(void *argument) {
   (void)argument;
   for (;;) {
-		mod_index = (mod_index == tune_len) ? 0 : (mod_index + 1);
+		mod_index = (mod_index < tune_len) ? (mod_index + 1) : 0;
 		playBuzzer(tune_mods[mod_index]);
 		osDelay(300);
 	}
