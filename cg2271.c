@@ -268,66 +268,66 @@ void runMotor(uint8_t direction)
 
 		case 0:
 			// Forward motion
-			TPM0_C0V = 750;
+			TPM0_C0V = 500;
 			TPM0_C1V = 0;
-			TPM0_C2V = 750;
+			TPM0_C2V = 500;
 			TPM0_C3V = 0;
 			break;
 
 		case 1:
 			// Backward motion
 			TPM0_C0V = 0;
-			TPM0_C1V = 750;
+			TPM0_C1V = 500;
 			TPM0_C2V = 0;
-			TPM0_C3V = 750;
+			TPM0_C3V = 500;
 			break;
 
 		case 2:
 			// Left turn
 			TPM0_C0V = 0;
-			TPM0_C1V = 750;
-			TPM0_C2V = 750;
+			TPM0_C1V = 500;
+			TPM0_C2V = 500;
 			TPM0_C3V = 0;
 			break;
 
 		case 3:
 			// Right turn
-			TPM0_C0V = 750;
+			TPM0_C0V = 500;
 			TPM0_C1V = 0;
 			TPM0_C2V = 0;
-			TPM0_C3V = 750;
+			TPM0_C3V = 500;
 			break;
 
 		case 4:
 			// Front left curved turn
-			TPM0_C0V = 400;
+			TPM0_C0V = 200;
 			TPM0_C1V = 0;
-			TPM0_C2V = 800;
+			TPM0_C2V = 600;
 			TPM0_C3V = 0;
 			break;
 
 		case 5:
 			// Front right curved turn
-			TPM0_C0V = 800;
+			TPM0_C0V = 600;
 			TPM0_C1V = 0;
-			TPM0_C2V = 400;
+			TPM0_C2V = 200;
 			TPM0_C3V = 0;
 			break;
 
 		case 6:
 			// Back left curved turn
 			TPM0_C0V = 0;
-			TPM0_C1V = 400;
+			TPM0_C1V = 200;
 			TPM0_C2V = 0;
-			TPM0_C3V = 800;
+			TPM0_C3V = 600;
 			break;
 		
 		case 7:
 			// Back right curved turn
 			TPM0_C0V = 0;
-			TPM0_C1V = 800;
+			TPM0_C1V = 600;
 			TPM0_C2V = 0;
-			TPM0_C3V = 400;
+			TPM0_C3V = 200;
 			break;
 
 		default:

@@ -78,7 +78,7 @@ __NO_RETURN static void brain_thread(void *argument) {
 		// Get command from command queue
 		msgPkt command;
 		msgPkt motorDirection;
-		osStatus_t command_status = osMessageQueueGet(command_MsgQueue, &command, NULL, 0U);
+		osStatus_t command_status = osMessageQueueGet(command_MsgQueue, &command, NULL, 7200000U);
 		
 		if (command_status == osOK)
 		{
@@ -86,7 +86,7 @@ __NO_RETURN static void brain_thread(void *argument) {
 			{
 				// Run motors
 				motorDirection.data = command.data & 0x0F; // set motorDirection to the last 4 bits of the command
-				osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 10U);
+				osMessageQueuePut(motorDirection_MsgQueue, &motorDirection, 0U, 0U);
 				
 				// Set LEDs to moving mode
 				osEventFlagsSet(greenLEDRunFlag, FLAG_SET);
@@ -202,7 +202,7 @@ __NO_RETURN static void motor_thread(void *argument) {
 			runMotor(0x08);
 		}
 		
-		osDelay(500);
+		osDelay(150);
 	}
 }
 
@@ -259,7 +259,7 @@ int main(void) {
 	
 	osEventFlagsSet(programRunFlag, FLAG_SET);
 	
-	osThreadNew(motor_thread, NULL, NULL); // Create thread for motor
+	osThreadNew(motor_thread, NULL, &thread1_attr); // Create thread for motor
 	osThreadNew(led_green_run_thread, NULL, NULL); // Create thread for running green LED  
 	osThreadNew(led_green_stop_thread, NULL, NULL);  // Create thread for stopping green LED
 	osThreadNew(led_red_run_thread, NULL, NULL); // Create thread for running red LED  
