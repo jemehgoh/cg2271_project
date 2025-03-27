@@ -15,12 +15,12 @@
 static volatile uint32_t runningLED = 0;
 
 // Buzzer tune mod values (for setting PWM frequency)
-static uint32_t tune_mods[8] = {1432, 1276, 1137, 1075, 957, 853, 760, 417};
-static uint32_t tune_len = 7; // length of tune_mods - 1
+static uint32_t tune_mods[4] = {1400, 1600, 1800, 1600};
+static uint32_t tune_len = 3; // length of tune_mods - 1
 
 // Buzzer end tune mod values (for setting PWM frequency)
-static uint32_t end_tune_mods[6] = {1432, 1137, 957, 417, 760, 417};
-static uint32_t end_tune_len = 5; // length of end_tune_mods - 1
+static uint32_t end_tune_mods[4] = {200, 400, 600, 400};
+static uint32_t end_tune_len = 3; // length of end_tune_mods - 1
 
 static volatile uint32_t mod_index = 0;
 static volatile uint32_t end_mod_index = 0;
