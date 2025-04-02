@@ -167,18 +167,27 @@ void setupRedLED(void)
 	// Enable clock signal to PORTD and PORTE
 	SIM -> SCGC5 |= SIM_SCGC5_PORTD_MASK;
 	SIM -> SCGC5 |= SIM_SCGC5_PORTE_MASK;
+	SIM -> SCGC5 |= SIM_SCGC5_PORTB_MASK;
 	
 	// Set up PTE1, PTE0, PTD6, PTD7 as GPIO
 	PORTE -> PCR[0] |= PORT_PCR_MUX(1);
 	PORTE -> PCR[1] |= PORT_PCR_MUX(1);	
 	PORTD -> PCR[6] |= PORT_PCR_MUX(1);
 	PORTD -> PCR[7] |= PORT_PCR_MUX(1);
+	PORTB -> PCR[8] |= PORT_PCR_MUX(1);
+	PORTB -> PCR[9] |= PORT_PCR_MUX(1);	
+	PORTB -> PCR[10] |= PORT_PCR_MUX(1);
+	PORTB -> PCR[11] |= PORT_PCR_MUX(1);
 	
 	// Configure direction of pins
 	PTE -> PDDR |= (1 << 0);
 	PTE -> PDDR |= (1 << 1);
 	PTD -> PDDR |= (1 << 6);
 	PTD -> PDDR |= (1 << 7);
+	PTB -> PDDR |= (1 << 8);
+	PTB -> PDDR |= (1 << 9);
+	PTB -> PDDR |= (1 << 10);
+	PTB -> PDDR |= (1 << 11);	
 }
 
 /*
@@ -190,6 +199,10 @@ void toggleRedLED(void)
 	PTE -> PTOR |= (1 << 1);
 	PTD -> PTOR |= (1 << 6);
 	PTD -> PTOR |= (1 << 7);
+	PTB -> PTOR |= (1 << 8);
+	PTB -> PTOR |= (1 << 9);
+	PTB -> PTOR |= (1 << 10);
+	PTB -> PTOR |= (1 << 11);	
 }
 
 // Motor control functions
@@ -300,34 +313,34 @@ void runMotor(uint8_t direction)
 
 		case 4:
 			// Front left curved turn
-			TPM0_C0V = 200;
+			TPM0_C0V = 100;
 			TPM0_C1V = 0;
-			TPM0_C2V = 600;
+			TPM0_C2V = 700;
 			TPM0_C3V = 0;
 			break;
 
 		case 5:
 			// Front right curved turn
-			TPM0_C0V = 600;
+			TPM0_C0V = 700;
 			TPM0_C1V = 0;
-			TPM0_C2V = 200;
+			TPM0_C2V = 100;
 			TPM0_C3V = 0;
 			break;
 
 		case 6:
 			// Back left curved turn
 			TPM0_C0V = 0;
-			TPM0_C1V = 200;
+			TPM0_C1V = 100;
 			TPM0_C2V = 0;
-			TPM0_C3V = 600;
+			TPM0_C3V = 700;
 			break;
 		
 		case 7:
 			// Back right curved turn
 			TPM0_C0V = 0;
-			TPM0_C1V = 600;
+			TPM0_C1V = 700;
 			TPM0_C2V = 0;
-			TPM0_C3V = 200;
+			TPM0_C3V = 100;
 			break;
 
 		default:
