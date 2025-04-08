@@ -217,7 +217,7 @@ __NO_RETURN static void buzzer_thread(void *argument) {
 		osEventFlagsWait(programRunFlag, FLAG_SET, osFlagsNoClear, osWaitForever);
 		mod_index = (mod_index == tune_len) ? 0 : (mod_index + 1);
 		playBuzzer(tune_mods[mod_index]);
-		osDelay(300);
+		osDelay(500);
 	}
 }
 
@@ -230,7 +230,7 @@ __NO_RETURN static void buzzer_end_thread(void *argument) {
 		osEventFlagsWait(programEndFlag, FLAG_SET, osFlagsNoClear, osWaitForever);
 		end_mod_index = (end_mod_index == end_tune_len) ? 0 : (end_mod_index + 1);
 		playBuzzer(end_tune_mods[end_mod_index]);
-		osDelay(300);
+		osDelay(500);
 	}
 }
 
